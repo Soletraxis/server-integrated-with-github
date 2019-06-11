@@ -1,0 +1,9 @@
+{
+  "name": "nodejs_test_server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Soletraxis/server-integrated-with-github.git",
+  "author": "Soletraxis",
+  "license": "MIT",
+  "private": false
+}
