@@ -64,24 +64,33 @@ http
         "",
         payload.pull_request.head.ref
       ).then(async e => {
-        return await getWholeRepo(e, payload.repository);
+        return await getWholeRepo(
+          e,
+          payload.repository,
+          payload.pull_request.head.ref
+        );
       });
-      Promise.all(getRawUrls(files).map(getRawFile)).then(e => console.log(e));
+      const cos = await Promise.all(reduceFilesToOneArray(files)).then(e=> e).catch(e=> console.log(e));
+      const odp = await Promise.all(cos.map(async e => {
+          const rawFile = await getRawFile(e.download_url);
+          return checkIfCodeContainsMixpanel(rawFile) && e;
+      })) .then(e=>e.filter(item => item))//.then(e => e.filter(checkIfCodeContainsMixpanel))
+        console.log(await getRawFile(odp[0].download_url))
     });
     res.write(req.url);
     res.end("Hello world");
   })
   .listen(8001);
 
-const getWholeRepo = async (repo, repository) => {
-  const dataPromises = await repo.map(async file => {
+const getWholeRepo = async (files, repository, branch) => {
+  const dataPromises = await files.map(async file => {
     if (file.type === "dir") {
       const filesPromises = await getReposContents(
         repository,
         file.path,
-        "Soletraxis-patch-3"
+        branch
       )
-        .then(async e => await getWholeRepo(e, repository))
+        .then(async e => await getWholeRepo(e, repository, branch))
         .catch(e => console.log("rej", e));
       const data = Promise.all(filesPromises).then(e => {
         return e;
@@ -93,16 +102,22 @@ const getWholeRepo = async (repo, repository) => {
   });
   return Promise.all(dataPromises).then(e => e);
 };
-const getRawUrls = files => {
+const reduceFilesToOneArray = files => {
   return files.reduce((acc, item) => {
     if (item.length !== undefined) {
-      return [...acc, ...getRawUrls(item)];
+      return [...acc, ...reduceFilesToOneArray(item)];
     } else {
-      return [...acc, item.download_url];
+      return [...acc, item];
     }
   }, []);
 };
 
 const getRawFile = file => {
-  return axios.get(file).then(e => e.data);
+  return axios
+    .get(file)
+    .then(e => (typeof e.data === "string" ? e.data : JSON.stringify(e.data)));
+};
+
+const checkIfCodeContainsMixpanel = code => {
+  return code.toUpperCase().includes("mixpanel".toUpperCase());
 };
