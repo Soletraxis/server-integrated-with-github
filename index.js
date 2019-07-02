@@ -1,6 +1,7 @@
 const http = require("http");
 const { App } = require("@octokit/app");
 const { request } = require("@octokit/request");
+const axios = require("axios");
 
 
 const app = new App({ id: APP_ID, privateKey: PRIVATE_KEY });
@@ -32,30 +33,76 @@ const installationAccessToken = async (name, login) => {
 };
 
 // https://developer.github.com/v3/issues/#create-an-issue
-const createIssue = async ({ name, owner: { login } }) => {
-  await request("GET /repos/:owner/:repo/contents", {
+const getReposContents = async (
+  { name, owner: { login } },
+  path = "",
+  branch = "master"
+) => {
+  return await request("GET /repos/:owner/:repo/contents/:path?ref=:branch", {
     owner: login,
     repo: name,
+    path: path,
+    branch: branch,
     headers: {
       authorization: `token ${await installationAccessToken(name, login)}`,
       accept: "application/vnd.github.machine-man-preview+json"
     },
     title: "My installation’s first issue"
-  }).then(e=> console.log(e.data));
+  })
+    .then(e => e.data)
+    .catch(e => console.log("rejection"));
 };
 
 http
   .createServer((req, res) => {
     res.writeHead(200, { "Content-Type": "application/json" });
-    req.on("data", chunk => {
+    req.on("data", async chunk => {
       const payload = JSON.parse(chunk);
 
-      createIssue(payload.repository)
-        .then(e => console.log("suc", e))
-        .catch(e => console.log("rej issue", e));
-      //payload.commits.map(item => getCommitDiff(item, payload.repository));
+      const files = await getReposContents(
+        payload.repository,
+        "",
+        payload.pull_request.head.ref
+      ).then(async e => {
+        return await getWholeRepo(e, payload.repository);
+      });
+      Promise.all(getRawUrls(files).map(getRawFile)).then(e => console.log(e));
     });
     res.write(req.url);
     res.end("Hello world");
   })
   .listen(8001);
+
+const getWholeRepo = async (repo, repository) => {
+  const dataPromises = await repo.map(async file => {
+    if (file.type === "dir") {
+      const filesPromises = await getReposContents(
+        repository,
+        file.path,
+        "Soletraxis-patch-3"
+      )
+        .then(async e => await getWholeRepo(e, repository))
+        .catch(e => console.log("rej", e));
+      const data = Promise.all(filesPromises).then(e => {
+        return e;
+      });
+      return await data;
+    } else {
+      return file;
+    }
+  });
+  return Promise.all(dataPromises).then(e => e);
+};
+const getRawUrls = files => {
+  return files.reduce((acc, item) => {
+    if (item.length !== undefined) {
+      return [...acc, ...getRawUrls(item)];
+    } else {
+      return [...acc, item.download_url];
+    }
+  }, []);
+};
+
+const getRawFile = file => {
+  return axios.get(file).then(e => e.data);
+};
