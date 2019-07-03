@@ -1,8 +1,8 @@
 const http = require("http");
 
-const reduceFilesToOneArray = require("./helpers/reduceFilesToOneArray");
+const reduceFilesToOneArray = require("./helpers/reduceFilesToOneArray/reduceFilesToOneArray");
 const getRawFile = require("./getDataFromRepo/getRawFile");
-const getLineNumber = require("./helpers/getLineNumber");
+const getLineNumber = require("./helpers/getLineNumber/getLineNumber");
 const checkIfCodeContainsMixpanel = require("./helpers/checkIfCodeContainsMixpanel");
 const getWholeRepo = require("./getDataFromRepo/getWholeRepo");
 const getReposContents = require("./getDataFromRepo/getReposContents");

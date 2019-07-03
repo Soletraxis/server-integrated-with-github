@@ -1,4 +1,4 @@
-const getLineNumber = require("../helpers/getLineNumber");
+const getLineNumberTest = require("./getLineNumber");
 let sampleFile;
 beforeAll(
   () =>
@@ -41,9 +41,9 @@ beforeAll(
       "*.apk\n" +
       "*.unitypackage\n")
 );
-test("getLineNumber works with sample .gitignore", () => {
+test("getLineNumberTest works with sample .gitignore", () => {
   expect(
-    getLineNumber(
+    getLineNumberTest(
       sampleFile.substring(
         0,
         sampleFile.toUpperCase().indexOf("mixpanel".toUpperCase())
