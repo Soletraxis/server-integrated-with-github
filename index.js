@@ -70,12 +70,31 @@ http
           payload.pull_request.head.ref
         );
       });
-      const cos = await Promise.all(reduceFilesToOneArray(files)).then(e=> e).catch(e=> console.log(e));
-      const odp = await Promise.all(cos.map(async e => {
+      // console.log(await getRawFile(files[1][0][0].download_url))
+      const cos = await Promise.all(reduceFilesToOneArray(files))
+        .then(e => e)
+        .catch(e => console.log(e));
+      const odp = await Promise.all(
+        cos.map(async e => {
           const rawFile = await getRawFile(e.download_url);
           return checkIfCodeContainsMixpanel(rawFile) && e;
-      })) .then(e=>e.filter(item => item))//.then(e => e.filter(checkIfCodeContainsMixpanel))
-        console.log(await getRawFile(odp[0].download_url))
+        })
+      ).then(e => e.filter(item => item)); //.then(e => e.filter(checkIfCodeContainsMixpanel))
+      // const test =await getRawFile(odp[0].download_url);
+      // console.log(getLineNumber(test.substring(0, test.toUpperCase().indexOf('mixpanel'.toUpperCase())),'\n'))
+      Promise.all(
+        odp.map(async e => {
+          const rawFile = await getRawFile(e.download_url);
+          // console.log(rawFile)
+          return getLineNumber(
+            rawFile.substring(
+              0,
+              rawFile.toUpperCase().indexOf("mixpanel".toUpperCase())
+            ),
+            "\n"
+          );
+        })
+      ).then(e => console.log(e));
     });
     res.write(req.url);
     res.end("Hello world");
@@ -120,4 +139,22 @@ const getRawFile = file => {
 
 const checkIfCodeContainsMixpanel = code => {
   return code.toUpperCase().includes("mixpanel".toUpperCase());
+};
+const getLineNumber = (string, subString, allowOverlapping) => {
+  string += "";
+  subString += "";
+  if (subString.length <= 0) return string.length + 1;
+
+  let n = 0,
+    pos = 0,
+    step = allowOverlapping ? 1 : subString.length;
+
+  while (true) {
+    pos = string.indexOf(subString, pos);
+    if (pos >= 0) {
+      ++n;
+      pos += step;
+    } else break;
+  }
+  return n + 1;
 };
