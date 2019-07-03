@@ -1,6 +1,6 @@
 const reduceFilesToOneArray = files => {
   return files.reduce((acc, item) => {
-    if (item.length !== undefined) {
+    if (Array.isArray(item)) {
       return [...acc, ...reduceFilesToOneArray(item)];
     } else {
       return [...acc, item];
