@@ -3,7 +3,7 @@ const http = require("http");
 const reduceFilesToOneArray = require("./helpers/reduceFilesToOneArray/reduceFilesToOneArray");
 const getRawFile = require("./getDataFromRepo/getRawFile");
 const getLineNumber = require("./helpers/getLineNumber/getLineNumber");
-const checkIfCodeContainsMixpanel = require("./helpers/checkIfCodeContainsMixpanel");
+const checkIfCodeContainsMixpanel = require("./helpers/checkIfCodeContainsMixpanel/checkIfCodeContainsMixpanel");
 const getWholeRepo = require("./getDataFromRepo/getWholeRepo");
 const getReposContents = require("./getDataFromRepo/getReposContents");
   http
